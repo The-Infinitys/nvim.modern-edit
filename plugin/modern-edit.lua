@@ -1,1 +1,1 @@
-require('modern-edit').setup()
+require('lua.modern-edit.init').setup()
