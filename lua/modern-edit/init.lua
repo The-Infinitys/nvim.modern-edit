@@ -44,27 +44,33 @@ function M.setup()
 
   local function shift_move(move_cmd)
     local mode = vim.api.nvim_get_mode().mode
-
     if mode == 'i' then
-      -- 挿入モードの場合:
+      -- 挿入モード：マークしてVisualモードを開始
       mark_current_pos()
-      -- <Esc> (Normal) -> `z (マークへジャンプ) -> v (Visual開始) -> move_cmd (移動)
-      local keys = vim.api.nvim_replace_termcodes('<Esc>`z' .. 'v' .. move_cmd, true, false, true)
-      vim.api.nvim_feedkeys(keys, 'n', true)
-    elseif mode == 'v' or mode == 'V' or mode == ' ' then
-      -- Visual/Visual Line/Visual Blockモードの場合:
-      -- Visualモードで矢印キーを押した際に選択解除されないよう、
-      -- 'n' モード（Normalモードのキーを送る）として feedkeys を実行します。
-      -- modeが' 'なのはVisual Blockモードです。
-      -- 選択のアンカーを固定し、カーソルを移動させます。
-      vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(move_cmd, true, false, true), 'n', true)
+      local esc = vim.api.nvim_replace_termcodes('<Esc>', true, false, true)
+      vim.api.nvim_feedkeys(esc, 'n', true)
+      if move_cmd == 'l' or move_cmd == 'j' then
+        vim.api.nvim_feedkeys('l', 'v', true)
+      end
+      vim.api.nvim_feedkeys('v', 'n', true)
+      if move_cmd == 'j' or move_cmd == 'k' then
+        vim.api.nvim_feedkeys(move_cmd, 'v', true)
+        if move_cmd == 'k' then
+          vim.api.nvim_feedkeys('l', 'v', true)
+        else
+          vim.api.nvim_feedkeys('h', 'v', true)
+        end
+      end
+    else
+      -- すでにVisualモード：そのまま移動（stopselを上書きするために直接 feedkeys）
+      vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(move_cmd, true, false, true), 'v', true)
     end
   end
 
   vim.keymap.set({ 'i', 'v' }, '<S-Left>', function() shift_move('h') end, opts)
   vim.keymap.set({ 'i', 'v' }, '<S-Right>', function() shift_move('l') end, opts)
-  vim.keymap.set({ 'i', 'v' }, '<S-Up>', function() shift_move('<Up>') end, opts)
-  vim.keymap.set({ 'i', 'v' }, '<S-Down>', function() shift_move('<Down>') end, opts)
+  vim.keymap.set({ 'i', 'v' }, '<S-Up>', function() shift_move('k') end, opts)
+  vim.keymap.set({ 'i', 'v' }, '<S-Down>', function() shift_move('j') end, opts)
 end
 
 return M
