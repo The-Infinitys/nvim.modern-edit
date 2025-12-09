@@ -1,0 +1,1 @@
+require('modern-edit').setup()
