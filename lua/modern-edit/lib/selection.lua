@@ -12,6 +12,69 @@ function M.esc()
     M.init()
 end
 
+--- 指定された位置の次の文字の位置を返します。
+-- @param row number 1から始まる行番号
+-- @param col number 0から始まる列番号 (バイトインデックス)
+-- @return next_row number 次の行番号
+-- @return next_col number 次の列番号
+function M.next_pos(row, col)
+    -- 現在の行の内容を取得 (行番号は1-based)
+    -- nvim_buf_get_linesは0-basedの行インデックスを受け取るため、row - 1 を使用
+    -- 最後の引数 false は 'end' 行を含まないことを意味する
+    local lines = vim.api.nvim_buf_get_lines(0, row - 1, row, false)
+    local line_content = lines[1] or ""
+    local line_len = #line_content
+
+    -- 次の文字の位置を計算
+    local next_col = col + 1
+
+    -- 行末を超えているかチェック
+    if next_col > line_len then
+        -- 次の行へ移動
+        local last_line_num = vim.api.nvim_buf_line_count(0)
+        if row < last_line_num then
+            local next_row = row + 1
+            next_col = 0 -- 次の行の最初の文字は列0
+            return next_row, next_col
+        else
+            -- 最終行の行末の場合、移動せず現在の位置を返す（またはnilを返すなどの判断も可能）
+            return row, col
+        end
+    else
+        -- 同じ行内で次の位置へ移動
+        return row, next_col
+    end
+end
+
+--- 指定された位置の前の文字の位置を返します。
+-- @param row number 1から始まる行番号
+-- @param col number 0から始まる列番号 (バイトインデックス)
+-- @return prev_row number 前の行番号
+-- @return prev_col number 前の列番号
+function M.previous_pos(row, col)
+    -- 前の文字の位置を計算
+    local prev_col = col - 1
+
+    -- 行頭を超えているかチェック
+    if prev_col < 0 then
+        -- 前の行へ移動
+        if row > 1 then
+            local prev_row = row - 1
+            -- 前の行の行末の列番号を取得
+            local prev_lines = vim.api.nvim_buf_get_lines(0, prev_row - 1, prev_row, false)
+            local prev_line_content = prev_lines[1] or ""
+            prev_col = #prev_line_content -- 前の行の最後の文字の列番号（0-basedバイトインデックス）
+            return prev_row, prev_col
+        else
+            -- 最初の行の行頭の場合、移動せず現在の位置を返す
+            return row, col
+        end
+    else
+        -- 同じ行内で前の位置へ移動
+        return row, prev_col
+    end
+end
+
 function M.cursor_pos()
     -- 0 は現在のウィンドウ (current window) を意味します
     -- 戻り値は {行番号, 列番号} の配列 (Luaのテーブル)
@@ -23,6 +86,69 @@ function M.cursor_pos()
     return row, col
 end
 
+function M.recheck_way()
+    local current_row, current_col = M.cursor_pos()
+    if current_row > M.selection_start_row then
+        M.selection_way = 'down'
+    elseif current_row < M.selection_start_row then
+        M.selection_way = 'up'
+    else
+        if current_col > M.selection_start_col then
+            M.selection_way = 'right'
+        elseif current_col < M.selection_start_col then
+            M.selection_way = 'left'
+        else
+            M.selection_way = 'none'
+        end
+    end
+end
+
+function M.reselect()
+    local current_row, current_col = M.cursor_pos()
+    M.recheck_way()
+    M.esc()
+    local target_start_col = M.selection_start_col
+    local target_start_row = M.selection_start_row
+    local target_end_col = current_col
+    local target_end_row = current_row
+    if M.selection_way == 'left' or M.selection_way == 'up' then
+        target_start_row,
+        target_start_col = M.previous_pos(target_start_row, target_start_col)
+        target_end_row,
+        target_end_col = M.next_pos(target_end_row, target_end_col)
+        return
+    elseif M.selection_way == 'right' or M.selection_way == 'down' then
+        target_start_row,
+        target_start_col = M.next_pos(target_start_row, target_start_col)
+        target_end_row,
+        target_end_col = M.previous_pos(target_end_row, target_end_col)
+    else
+        target_start_col = 1
+        target_start_row = 1
+        target_end_col = 1
+        target_end_row = 1
+    end
+    local goto_start_cmd = string.format("<C-o>%dG<CR><C-o>%d|<CR>", target_start_col, target_start_row)
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(goto_start_cmd, true, true, true), 'n', false)
+
+    M.selection_start_row,
+    M.selection_start_col = M.cursor_pos()
+    vim.api.nvim_feedkeys('h', 'i', false)
+    M.recheck_way()
+    local visual_mode_command = vim.api.nvim_replace_termcodes('<C-o>v', true, true, true)
+    vim.api.nvim_feedkeys(visual_mode_command, 'i', false)
+
+    local goto_end_cmd = string.format("%dG%d|", target_end_col, target_end_row)
+    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(goto_end_cmd, true, true, true), 'v', false)
+    local end_move_key = ''
+    if M.selection_way == 'right' or M.selection_way == 'down' then
+        end_move_key = vim.api.nvim_replace_termcodes('<S-Left>', true, true, true)
+    elseif M.selection_way == 'left' or M.selection_way == 'up' then
+        end_move_key = vim.api.nvim_replace_termcodes('<S-Right>', true, true, true)
+    end
+    vim.api.nvim_feedkeys(end_move_key, 'v', false)
+end
+
 function M.safe_check()
     local current_row, current_col = M.cursor_pos()
     local mode = vim.api.nvim_get_mode().mode
@@ -32,23 +158,47 @@ function M.safe_check()
     if mode == 'v' then
         if M.selection_way == 'left' or M.selection_way == 'up' then
             if not (current_row < M.selection_start_row) then
-                if not (current_col < M.selection_start_col) then
-                    M.esc()
+                if current_row == M.selection_start_row then
+                    if not (current_col < M.selection_start_col) then
+                        if current_col == M.selection_start_col then
+                            M.esc()
+                        else
+                            M.reselect()
+                        end
+                    end
+                else
+                    M.reselect()
                 end
             end
         elseif M.selection_way == 'right' then
             current_col = current_col + 1
             if not (current_row > M.selection_start_row) then
-                if not (current_col > M.selection_start_col) then
-                    vim.api.nvim_feedkeys('l', 'n', false)
-                    M.esc()
+                if current_row == M.selection_start_row then
+                    if not (current_col > M.selection_start_col) then
+                        if current_col == M.selection_start_col then
+                            vim.api.nvim_feedkeys('l', 'n', false)
+                            M.esc()
+                        else
+                            M.reselect()
+                        end
+                    end
+                else
+                    M.reselect()
                 end
             end
         elseif M.selection_way == 'down' then
             current_col = current_col + 1
             if not (current_row > M.selection_start_row) then
-                if not (current_col > M.selection_start_col) then
-                    M.esc()
+                if current_row == M.selection_start_row then
+                    if not (current_col > M.selection_start_col) then
+                        if current_col == M.selection_start_col then
+                            M.esc()
+                        else
+                            M.reselect()
+                        end
+                    end
+                else
+                    M.reselect()
                 end
             end
         end
