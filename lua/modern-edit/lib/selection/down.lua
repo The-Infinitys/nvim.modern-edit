@@ -41,10 +41,8 @@ function M.on_insert()
     local last_row = vim.api.nvim_buf_line_count(0)
 
     if current_col == 0 then
-        if current_row == last_row then
-            local key = vim.api.nvim_replace_termcodes('$', true, true, true)
-        else
-        end
+        local key = vim.api.nvim_replace_termcodes('<C-o>v$', true, true, true)
+        vim.api.nvim_feedkeys(key, 'i', false)
         return
     end
 

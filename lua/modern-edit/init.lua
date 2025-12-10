@@ -3,7 +3,7 @@ local M = {}
 function M.setup()
   -- --- 基本設定 ---
   vim.opt.clipboard = "unnamedplus"
-  vim.opt.keymodel = "startsel,stopsel"
+  vim.opt.keymodel = "stopsel"
   vim.opt.whichwrap:append("<,>,[,],b,s")
   vim.opt.virtualedit = "onemore"
 
