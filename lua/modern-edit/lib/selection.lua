@@ -30,15 +30,26 @@ function M.safe_check()
         return
     end
     if mode == 'v' then
-        if M.selection_way == 'left' then
-            if not (current_col < M.selection_start_col) and not (current_row <= M.selection_start_row) then
-                M.esc()
+        if M.selection_way == 'left' or M.selection_way == 'up' then
+            if not (current_row < M.selection_start_row) then
+                if not (current_col < M.selection_start_col) then
+                    M.esc()
+                end
             end
         elseif M.selection_way == 'right' then
             current_col = current_col + 1
-            if not (current_col > M.selection_start_col) and not (current_row >= M.selection_start_row) then
-                vim.api.nvim_feedkeys('l', 'n', false)
-                M.esc()
+            if not (current_row > M.selection_start_row) then
+                if not (current_col > M.selection_start_col) then
+                    vim.api.nvim_feedkeys('l', 'n', false)
+                    M.esc()
+                end
+            end
+        elseif M.selection_way == 'down' then
+            current_col = current_col + 1
+            if not (current_row > M.selection_start_row) then
+                if not (current_col > M.selection_start_col) then
+                    M.esc()
+                end
             end
         end
     end
