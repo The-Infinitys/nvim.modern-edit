@@ -17,11 +17,9 @@ function M.on_visual()
     if selection_lib.selection_way == 'right' then
         selection_lib.selection_way = 'down'
     end
-    local current_row, _ = selection_lib.cursor_pos()
+    local current_row = selection_lib.cursor_pos()
     -- バッファの最終行を取得
     local last_row = vim.api.nvim_buf_line_count(0)
-
-    -- 現在の行が最終行の場合
     if current_row == last_row then
         -- 行末に移動 ('$' キー)
         local key = vim.api.nvim_replace_termcodes('$', true, true, true)
@@ -39,11 +37,19 @@ function M.on_insert()
     selection_lib.selection_start_row,
     selection_lib.selection_start_col = selection_lib.cursor_pos()
 
-    local current_row, _ = selection_lib.cursor_pos()
+    local current_row, current_col = selection_lib.cursor_pos()
     local last_row = vim.api.nvim_buf_line_count(0)
+
+    if current_col == 0 then
+        if current_row == last_row then
+            local key = vim.api.nvim_replace_termcodes('$', true, true, true)
+        else
+        end
+        return
+    end
+
     local move_key
 
-    -- 現在の行が最終行の場合
     if current_row == last_row then
         -- 行末に移動 ('$')
         move_key = vim.api.nvim_replace_termcodes('$', true, true, true)
