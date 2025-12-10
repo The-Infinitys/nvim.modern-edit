@@ -1,18 +1,59 @@
 local M = {}
+
+-- 必要なライブラリのロード (元のコードに依存)
+local selection_lib = require("modern-edit.lib.selection")
+
 function M.process()
     local mode = vim.api.nvim_get_mode().mode
-    if mode == 'i' then
-        M.on_insert()
-    end
     if mode == 'v' then
-        M.on_visual()
+        M.on_visual() -- 関数名を変更
+    elseif mode == 'i' then
+        M.on_insert() -- 関数名を変更
     end
 end
 
+-- 視覚モードでの下向き動作
 function M.on_visual()
+    if selection_lib.selection_way == 'right' then
+        selection_lib.selection_way = 'down'
+    end
+    local current_row, _ = selection_lib.cursor_pos()
+    -- バッファの最終行を取得
+    local last_row = vim.api.nvim_buf_line_count(0)
+
+    -- 現在の行が最終行の場合
+    if current_row == last_row then
+        -- 行末に移動 ('$' キー)
+        local key = vim.api.nvim_replace_termcodes('$', true, true, true)
+        vim.api.nvim_feedkeys(key, 'n', false)
+    else
+        -- 視覚モードのまま、カーソルを下に移動 ('j' キー)
+        local key = vim.api.nvim_replace_termcodes('j', true, true, true)
+        vim.api.nvim_feedkeys(key, 'v', false)
+    end
 end
 
+-- 挿入モードでの下向き動作
 function M.on_insert()
+    selection_lib.selection_way = 'down'
+    selection_lib.selection_start_row,
+    selection_lib.selection_start_col = selection_lib.cursor_pos()
+
+    local current_row, _ = selection_lib.cursor_pos()
+    local last_row = vim.api.nvim_buf_line_count(0)
+    local move_key
+
+    -- 現在の行が最終行の場合
+    if current_row == last_row then
+        -- 行末に移動 ('$')
+        move_key = vim.api.nvim_replace_termcodes('$', true, true, true)
+    else
+        move_key = vim.api.nvim_replace_termcodes('j', true, true, true)
+    end
+    -- <C-o>h<C-o>v の部分を、<C-o>l<C-o>v に変更する
+    -- 上向き版の 'h' (左) を 'l' (右) に対応させる
+    local key = vim.api.nvim_replace_termcodes('<C-o>vh', true, true, true)
+    vim.api.nvim_feedkeys(key .. move_key, 'i', false)
 end
 
 return M

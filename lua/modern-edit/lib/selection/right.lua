@@ -1,5 +1,8 @@
 local M = {}
 
+local selection_lib = require("modern-edit.lib.selection")
+
+
 -- 現在のバッファの総行数を取得
 local function get_total_line_count()
     return vim.api.nvim_buf_line_count(0)
@@ -27,7 +30,10 @@ function M.process()
 end
 
 function M.on_visual()
-    local current_row, current_col = require("modern-edit.lib.selection").cursor_pos()
+       if selection_lib.selection_way == 'down' then
+        selection_lib.selection_way = 'right'
+    end
+ local current_row, current_col = selection_lib.cursor_pos()
     local current_line_byte_length = get_current_line_byte_length()
     local total_lines = get_total_line_count()
 
@@ -48,9 +54,9 @@ function M.on_visual()
 end
 
 function M.on_insert()
-    require("modern-edit.lib.selection").selection_way = 'right'
-    require("modern-edit.lib.selection").selection_start_row,
-    require("modern-edit.lib.selection").selection_start_col = require("modern-edit.lib.selection").cursor_pos()
+    selection_lib.selection_way = 'right'
+    selection_lib.selection_start_row,
+    selection_lib.selection_start_col = selection_lib.cursor_pos()
     local key = vim.api.nvim_replace_termcodes('<C-o>v', true, true, true)
     vim.api.nvim_feedkeys(key, 'i', false)
 end

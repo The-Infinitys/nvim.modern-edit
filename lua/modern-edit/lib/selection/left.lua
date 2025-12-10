@@ -1,5 +1,8 @@
 local M = {}
 
+local selection_lib = require("modern-edit.lib.selection")
+
+
 function M.process()
     local mode = vim.api.nvim_get_mode().mode
     if mode == 'v' then
@@ -10,7 +13,10 @@ function M.process()
 end
 
 function M.on_visual()
-    local current_row, current_col = require("modern-edit.lib.selection").cursor_pos()
+    if selection_lib.selection_way == 'up' then
+        selection_lib.selection_way = 'left'
+    end
+    local current_row, current_col = selection_lib.cursor_pos()
     if current_col == 0 and current_row > 1 then
         -- 条件を満たす場合: 前の行の行末へカーソルを移動させる (k$)
         -- 'k$'キーはビジュアルモードで押されると、選択範囲を前の行の行末まで拡張します。
@@ -24,13 +30,12 @@ function M.on_visual()
 end
 
 function M.on_insert()
-    require("modern-edit.lib.selection").selection_way = 'left'
-    require("modern-edit.lib.selection").selection_start_row,
-    require("modern-edit.lib.selection").selection_start_col = require("modern-edit.lib.selection").cursor_pos()
+    selection_lib.selection_way = 'left'
+    selection_lib.selection_start_row,
+    selection_lib.selection_start_col = selection_lib.cursor_pos()
     -- インサートモードから一時的にノーマルモードに移行してビジュアルモードを開始し、すぐにインサートモードに戻る
     local key = vim.api.nvim_replace_termcodes('<C-o>h<C-o>v', true, true, true)
     vim.api.nvim_feedkeys(key, 'i', false)
 end
-
 
 return M
