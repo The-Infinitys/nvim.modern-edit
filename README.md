@@ -69,7 +69,6 @@ require('modern-edit').setup()
 
 ```lua
 vim.opt.clipboard = "unnamedplus"
-vim.opt.keymodel = "stopsel"
 vim.opt.whichwrap:append("<,>,[,],b,s")
 vim.opt.virtualedit = "onemore"
 ```
