@@ -228,6 +228,10 @@ function M.setup(opts)
             M.safe_check()
         end)
     end, opts)
+    vim.keymap.set('v', '<Left>', '<Esc>`<i', opts)
+    vim.keymap.set('v', '<Right>', '<Esc>`>a', opts)
+    vim.keymap.set('v', '<Up>', '<Esc>`<i<Up>', opts)
+    vim.keymap.set('v', '<Down>', '<Esc>`>a<Down>', opts)
 end
 
 return M
