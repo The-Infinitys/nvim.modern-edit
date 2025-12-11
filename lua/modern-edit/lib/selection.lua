@@ -108,13 +108,13 @@ function M.reselect()
     local mode = M.recheck_way()
     vim.api.nvim_feedkeys('o', 'v', false)
     if mode == 'left' or mode == 'up' then
-        require("lua.modern-edit.lib.selection.left").on_visual()
+        require("modern-edit.lib.selection.left").on_visual()
         vim.api.nvim_feedkeys('o', 'v', false)
-        require("lua.modern-edit.lib.selection.right").on_visual()
+        require("modern-edit.lib.selection.right").on_visual()
     elseif mode == 'right' or mode == 'down' then
-        require("lua.modern-edit.lib.selection.right").on_visual()
+        require("modern-edit.lib.selection.right").on_visual()
         vim.api.nvim_feedkeys('o', 'v', false)
-        require("lua.modern-edit.lib.selection.left").on_visual()
+        require("modern-edit.lib.selection.left").on_visual()
     else
         return
     end
