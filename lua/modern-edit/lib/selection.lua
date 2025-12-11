@@ -232,6 +232,12 @@ function M.setup(opts)
     vim.keymap.set('v', '<Right>', '<Esc>`>a', opts)
     vim.keymap.set('v', '<Up>', '<Esc>`<i<Up>', opts)
     vim.keymap.set('v', '<Down>', '<Esc>`>a<Down>', opts)
+    vim.keymap.set('i', '<Up>', function()
+        require("modern-edit.lib.selection.up").normal_insert()
+    end, opts)
+    vim.keymap.set('i', '<Down>', function()
+        require("modern-edit.lib.selection.down").normal_insert()
+    end, opts)
 end
 
 return M

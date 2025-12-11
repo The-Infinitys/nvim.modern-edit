@@ -46,4 +46,15 @@ function M.on_insert()
     vim.api.nvim_feedkeys(key .. visual_key .. move_key, 'i', false)
 end
 
+function M.normal_insert()
+    local current_row, _ = selection_lib.cursor_pos()
+    local key
+    if current_row > 1 then
+        key = vim.api.nvim_replace_termcodes('<C-o>k', true, true, true)
+    else
+        key = vim.api.nvim_replace_termcodes('<C-o>0', true, true, true)
+    end
+    vim.api.nvim_feedkeys(key, 'i', false)
+end
+
 return M

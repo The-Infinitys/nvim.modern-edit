@@ -60,4 +60,17 @@ function M.on_insert()
     vim.api.nvim_feedkeys(key .. move_key, 'i', false)
 end
 
+function M.normal_insert()
+    local current_row, _ = selection_lib.cursor_pos()
+    local key
+    local last_row = vim.api.nvim_buf_line_count(0)
+    if current_row == last_row then
+        -- 行末に移動 ('$')
+        key = vim.api.nvim_replace_termcodes('<C-o>$', true, true, true)
+    else
+        key = vim.api.nvim_replace_termcodes('<C-o>j', true, true, true)
+    end
+    vim.api.nvim_feedkeys(key, 'i', false)
+end
+
 return M
