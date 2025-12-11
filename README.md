@@ -82,4 +82,4 @@ vim.opt.virtualedit = "onemore"
 
 ## ライセンス
 
-このプロジェクトは [LICENSE TYPE] の下でライセンスされています。
+このプロジェクトは MIT LICENSE の下でライセンスされています。
