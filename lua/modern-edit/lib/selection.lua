@@ -101,52 +101,24 @@ function M.recheck_way()
             M.selection_way = 'none'
         end
     end
+    return M.selection_way
 end
 
 function M.reselect()
-    local current_row, current_col = M.cursor_pos()
-    M.recheck_way()
-    M.esc()
-    local target_start_col = M.selection_start_col
-    local target_start_row = M.selection_start_row
-    local target_end_col = current_col
-    local target_end_row = current_row
-    if M.selection_way == 'left' or M.selection_way == 'up' then
-        target_start_row,
-        target_start_col = M.previous_pos(target_start_row, target_start_col)
-        target_end_row,
-        target_end_col = M.next_pos(target_end_row, target_end_col)
-        return
-    elseif M.selection_way == 'right' or M.selection_way == 'down' then
-        target_start_row,
-        target_start_col = M.next_pos(target_start_row, target_start_col)
-        target_end_row,
-        target_end_col = M.previous_pos(target_end_row, target_end_col)
+    local mode = M.recheck_way()
+    vim.api.nvim_feedkeys('o', 'v', false)
+    if mode == 'left' or mode == 'up' then
+        require("lua.modern-edit.lib.selection.left").on_visual()
+        vim.api.nvim_feedkeys('o', 'v', false)
+        require("lua.modern-edit.lib.selection.right").on_visual()
+    elseif mode == 'right' or mode == 'down' then
+        require("lua.modern-edit.lib.selection.right").on_visual()
+        vim.api.nvim_feedkeys('o', 'v', false)
+        require("lua.modern-edit.lib.selection.left").on_visual()
     else
-        target_start_col = 1
-        target_start_row = 1
-        target_end_col = 1
-        target_end_row = 1
+        return
     end
-    local goto_start_cmd = string.format("<C-o>%dG<CR><C-o>%d|<CR>", target_start_col, target_start_row)
-    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(goto_start_cmd, true, true, true), 'n', false)
-
-    M.selection_start_row,
-    M.selection_start_col = M.cursor_pos()
-    vim.api.nvim_feedkeys('h', 'i', false)
-    M.recheck_way()
-    local visual_mode_command = vim.api.nvim_replace_termcodes('<C-o>v', true, true, true)
-    vim.api.nvim_feedkeys(visual_mode_command, 'i', false)
-
-    local goto_end_cmd = string.format("%dG%d|", target_end_col, target_end_row)
-    vim.api.nvim_feedkeys(vim.api.nvim_replace_termcodes(goto_end_cmd, true, true, true), 'v', false)
-    local end_move_key = ''
-    if M.selection_way == 'right' or M.selection_way == 'down' then
-        end_move_key = vim.api.nvim_replace_termcodes('<S-Left>', true, true, true)
-    elseif M.selection_way == 'left' or M.selection_way == 'up' then
-        end_move_key = vim.api.nvim_replace_termcodes('<S-Right>', true, true, true)
-    end
-    vim.api.nvim_feedkeys(end_move_key, 'v', false)
+    M.selection_way = mode
 end
 
 function M.safe_check()
