@@ -34,10 +34,10 @@ end
 -- 挿入モードでの下向き動作
 function M.on_insert()
     selection_lib.selection_way = 'down'
-    selection_lib.selection_start_row,
-    selection_lib.selection_start_col = selection_lib.cursor_pos()
-
     local current_row, current_col = selection_lib.cursor_pos()
+    selection_lib.selection_start_row = current_row
+    selection_lib.selection_start_col = current_col
+
     local last_row = vim.api.nvim_buf_line_count(0)
 
     if current_col == 0 then

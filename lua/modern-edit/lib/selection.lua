@@ -179,8 +179,17 @@ end
 
 function M.setup(opts)
     M.init()
-    vim.api.nvim_set_keymap('i', '<C-a>', '<C-o>vgg0<Esc><C-o>vG$', { noremap = true, silent = true })
+    vim.keymap.set('n', '<C-o>', '<Nop>', opts)
+    vim.keymap.set('i', '<C-a>', function()
+        M.init()
+        require("modern-edit.lib.selection.all").process()
+    end, opts)
+    vim.keymap.set('v', '<C-a>', function()
+        M.init()
+        require("modern-edit.lib.selection.all").process()
+    end, opts)
     vim.keymap.set('i', '<S-Left>', function()
+        M.init()
         require("modern-edit.lib.selection.left").process()
         vim.schedule(function()
             M.safe_check()
@@ -193,6 +202,7 @@ function M.setup(opts)
         end)
     end, opts)
     vim.keymap.set('i', '<S-Right>', function()
+        M.init()
         require("modern-edit.lib.selection.right").process()
         vim.schedule(function()
             M.safe_check()
@@ -205,6 +215,7 @@ function M.setup(opts)
         end)
     end, opts)
     vim.keymap.set('i', '<S-Up>', function()
+        M.init()
         require("modern-edit.lib.selection.up").process()
         vim.schedule(function()
             M.safe_check()
@@ -217,6 +228,7 @@ function M.setup(opts)
         end)
     end, opts)
     vim.keymap.set('i', '<S-Down>', function()
+        M.init()
         require("modern-edit.lib.selection.down").process()
         vim.schedule(function()
             M.safe_check()
@@ -238,6 +250,20 @@ function M.setup(opts)
     vim.keymap.set('i', '<Down>', function()
         require("modern-edit.lib.selection.down").normal_insert()
     end, opts)
+    vim.api.nvim_create_autocmd("ModeChanged", {
+        pattern = "v:n", -- ビジュアルモードからノーマルモードへの変更を検出
+        callback = function()
+            M.init()
+        end,
+        group = vim.api.nvim_create_augroup("ModernEditSelectionReset", { clear = true }),
+    })
+    vim.api.nvim_create_autocmd("ModeChanged", {
+        pattern = "v:i", -- ビジュアルモードからノーマルモードへの変更を検出
+        callback = function()
+            M.init()
+        end,
+        group = vim.api.nvim_create_augroup("ModernEditSelectionReset", { clear = true }),
+    })
 end
 
 return M

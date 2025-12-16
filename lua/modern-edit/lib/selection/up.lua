@@ -25,9 +25,9 @@ end
 
 function M.on_insert()
     selection_lib.selection_way = 'up'
-    selection_lib.selection_start_row,
-    selection_lib.selection_start_col = selection_lib.cursor_pos()
     local current_row, current_col = selection_lib.cursor_pos()
+    selection_lib.selection_start_row = current_row
+    selection_lib.selection_start_col = current_col
     local visual_key = vim.api.nvim_replace_termcodes('<C-o>v', true, true, true)
     local key
     if current_col == 0 and current_row > 1 then
